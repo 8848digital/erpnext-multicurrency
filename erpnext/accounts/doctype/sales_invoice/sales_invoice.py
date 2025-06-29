@@ -1269,6 +1269,8 @@ class SalesInvoice(SellingController):
 				against_voucher = self.return_against
 
 			# Did not use base_grand_total to book rounding loss gle
+
+			#base_grand_total changed to grand_total to allow customer to transact in multiple currencies
 			gl_entries.append(
 				self.get_gl_dict(
 					{
@@ -1278,9 +1280,7 @@ class SalesInvoice(SellingController):
 						"due_date": self.due_date,
 						"against": self.against_income_account,
 						"debit": base_grand_total,
-						"debit_in_account_currency": base_grand_total
-						if self.party_account_currency == self.company_currency
-						else grand_total,
+						"debit_in_account_currency": grand_total,  
 						"debit_in_transaction_currency": grand_total,
 						"against_voucher": against_voucher,
 						"against_voucher_type": self.doctype,

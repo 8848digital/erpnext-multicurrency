@@ -456,11 +456,10 @@ def get_party_account(party_type, party=None, company=None, include_advance=Fals
 		account = frappe.get_cached_value("Company", company, default_account_name)
 
 	existing_gle_currency = get_party_gle_currency(party_type, party, company)
-	if existing_gle_currency:
-		if account:
-			account_currency = frappe.get_cached_value("Account", account, "account_currency")
-		if (account and account_currency != existing_gle_currency) or not account:
-			account = get_party_gle_account(party_type, party, company)
+	# Support multiple currencies for the same party
+	# Remove currency validation since we're tracking balances per currency
+	if not account:
+		account = get_party_gle_account(party_type, party, company)
 
 	# get default account on the basis of party type
 	if not account:
@@ -557,24 +556,10 @@ def get_party_gle_account(party_type, party, company):
 
 
 def validate_party_gle_currency(party_type, party, company, party_account_currency=None):
-	"""Validate party account currency with existing GL Entry's currency"""
-	if not party_account_currency:
-		party_account_currency = get_party_account_currency(party_type, party, company)
-
-	existing_gle_currency = get_party_gle_currency(party_type, party, company)
-
-	if existing_gle_currency and party_account_currency != existing_gle_currency:
-		frappe.throw(
-			_(
-				"{0} {1} has accounting entries in currency {2} for company {3}. Please select a receivable or payable account with currency {2}."
-			).format(
-				frappe.bold(party_type),
-				frappe.bold(party),
-				frappe.bold(existing_gle_currency),
-				frappe.bold(company),
-			),
-			InvalidAccountCurrency,
-		)
+	"""Allow multiple currencies for the same party"""
+	# Support multiple currencies for the same party
+	# No need to validate against existing GL Entry currency
+	# Balances will be tracked per currency
 
 
 def validate_party_accounts(doc):
