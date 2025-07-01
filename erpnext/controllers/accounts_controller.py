@@ -344,12 +344,28 @@ class AccountsController(TransactionBase):
 				unreconcile_doc.flags.ignore_links = True
 				unreconcile_doc.save(ignore_permissions=True)
 
-		# delete docs upon parent doc deletion
+		# Instead of canceling, create a reversal journal entry
 		unreconcile_docs = frappe.db.get_all("Unreconcile Payment", filters={"voucher_no": self.name})
 		for x in unreconcile_docs:
 			_doc = frappe.get_doc("Unreconcile Payment", x.name)
 			if _doc.docstatus == 1:
-				_doc.cancel()
+				# Create reversal journal entry
+				reversal_entry = frappe.get_doc({
+					"doctype": "Journal Entry",
+					"voucher_type": "Reversal",
+					"posting_date": frappe.utils.nowdate(),
+					"accounts": [
+						{
+							"account": entry.account,
+							"debit_in_account_currency": entry.credit_in_account_currency,
+							"credit_in_account_currency": entry.debit_in_account_currency
+						}
+						for entry in _doc.accounts
+					]
+				})
+				reversal_entry.insert(ignore_permissions=True)
+				reversal_entry.submit()
+
 			_doc.delete()
 
 	def _remove_references_in_repost_doctypes(self):
