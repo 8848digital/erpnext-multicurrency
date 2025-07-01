@@ -865,6 +865,7 @@ def create_reversal_journal_entry(accounts):
 	"""
 	Create a reversal journal entry for the given accounts.
 	"""
+	from erpnext.accounts.doctype.journal_entry.journal_entry import make_reverse_journal_entry
 	reversal_entry = make_reverse_journal_entry(source_name=accounts[0].parent)
 	reversal_entry.posting_date = frappe.utils.nowdate()
 	reversal_entry.insert(ignore_permissions=True)
