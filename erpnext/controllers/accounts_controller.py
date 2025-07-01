@@ -70,7 +70,7 @@ from erpnext.stock.get_item_details import (
 )
 from erpnext.utilities.regional import temporary_flag
 from erpnext.utilities.transaction_base import TransactionBase
-
+from erpnext.accounts.doctype.journal_entry.journal_entry import make_reverse_journal_entry
 
 class AccountMissingError(frappe.ValidationError):
 	pass
@@ -349,20 +349,10 @@ class AccountsController(TransactionBase):
 		for x in unreconcile_docs:
 			_doc = frappe.get_doc("Unreconcile Payment", x.name)
 			if _doc.docstatus == 1:
-				# Create reversal journal entry
-				reversal_entry = frappe.get_doc({
-					"doctype": "Journal Entry",
-					"voucher_type": "Reversal",
-					"posting_date": frappe.utils.nowdate(),
-					"accounts": [
-						{
-							"account": entry.account,
-							"debit_in_account_currency": entry.credit_in_account_currency,
-							"credit_in_account_currency": entry.debit_in_account_currency
-						}
-						for entry in _doc.accounts
-					]
-				})
+				# Create reversal journal entry using make_reverse_journal_entry
+				reversal_entry = make_reverse_journal_entry(source_name=_doc.name)
+				reversal_entry.posting_date = frappe.utils.nowdate()
+
 				reversal_entry.insert(ignore_permissions=True)
 				reversal_entry.submit()
 
