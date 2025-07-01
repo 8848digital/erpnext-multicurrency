@@ -36,6 +36,8 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import g
 from erpnext.stock import get_warehouse_account_map
 from erpnext.stock.utils import get_stock_value_on
 
+from erpnext.accounts.doctype.journal_entry.journal_entry import make_reverse_journal_entry
+
 if TYPE_CHECKING:
 	from erpnext.stock.doctype.repost_item_valuation.repost_item_valuation import RepostItemValuation
 
