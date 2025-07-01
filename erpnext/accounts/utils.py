@@ -802,10 +802,11 @@ def cancel_exchange_gain_loss_journal(
 					and (referenced_dt, referenced_dn) in references
 					and (parent_doc.doctype, parent_doc.name) in references
 				):
-					# only cancel JE generated against parent_doc and referenced_dn
-					gain_loss_je.cancel()
+					# Create reversal journal entry instead of canceling
+					create_reversal_journal_entry(gain_loss_je.accounts)
 			else:
-				gain_loss_je.cancel()
+				# Create reversal journal entry for all accounts if no specific reference
+				create_reversal_journal_entry(gain_loss_je.accounts)
 
 
 def delete_exchange_gain_loss_journal(
@@ -858,6 +859,27 @@ def get_linked_exchange_gain_loss_journal(referenced_dt: str, referenced_dn: str
 			pluck="name",
 		)
 	return gain_loss_journals
+
+
+def create_reversal_journal_entry(accounts):
+	"""
+	Create a reversal journal entry for the given accounts.
+	"""
+	reversal_entry = frappe.get_doc({
+		"doctype": "Journal Entry",
+		"voucher_type": "Reversal",
+		"posting_date": frappe.utils.nowdate(),
+		"accounts": [
+			{
+				"account": account.account,
+				"debit_in_account_currency": account.credit_in_account_currency,
+				"credit_in_account_currency": account.debit_in_account_currency
+			}
+			for account in accounts
+		]
+	})
+	reversal_entry.insert(ignore_permissions=True)
+	reversal_entry.submit()
 
 
 def cancel_common_party_journal(self):
