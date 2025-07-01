@@ -865,19 +865,8 @@ def create_reversal_journal_entry(accounts):
 	"""
 	Create a reversal journal entry for the given accounts.
 	"""
-	reversal_entry = frappe.get_doc({
-		"doctype": "Journal Entry",
-		"voucher_type": "Reversal",
-		"posting_date": frappe.utils.nowdate(),
-		"accounts": [
-			{
-				"account": account.account,
-				"debit_in_account_currency": account.credit_in_account_currency,
-				"credit_in_account_currency": account.debit_in_account_currency
-			}
-			for account in accounts
-		]
-	})
+	reversal_entry = make_reverse_journal_entry(source_name=accounts[0].parent)
+	reversal_entry.posting_date = frappe.utils.nowdate()
 	reversal_entry.insert(ignore_permissions=True)
 	reversal_entry.submit()
 
